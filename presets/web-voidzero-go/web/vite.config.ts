@@ -13,5 +13,5 @@ export default defineConfig({
     ignorePatterns: ['dist/**'],
   },
   fmt: { singleQuote: true, ignorePatterns: ['dist/**'] },
-  test: { include: ['src/**/*.test.ts'] },
+  test: { include: ['src/**/*.test.{ts,tsx}'] },
 });
