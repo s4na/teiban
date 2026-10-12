@@ -1,0 +1,17 @@
+class TeibanCli < Formula
+  desc "A CLI distributed from a versioned source archive"
+  homepage "https://github.com/@REPOSITORY@"
+  url "https://github.com/@REPOSITORY@/archive/refs/tags/v@VERSION@.tar.gz"
+  sha256 "@SHA256@"
+  head "https://github.com/@REPOSITORY@.git", branch: "main"
+
+  depends_on "go" => :build
+
+  def install
+    system "go", "build", *std_go_args(ldflags: "-s -w"), "./cmd/@NAME@"
+  end
+
+  test do
+    assert_match "Usage", shell_output("#{bin}/@NAME@ --help")
+  end
+end

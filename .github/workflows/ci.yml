@@ -72,7 +72,7 @@ jobs:
       - name: Check workflow syntax and expressions
         run: |
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
-          actionlint .github/workflows/*.yml parts/github-actions/ci.yml
+          actionlint .github/workflows/*.yml parts/github-actions/ci.yml presets/homebrew-cli/.github/workflows/*.yml
       - name: Verify action dependencies
         env:
           GH_TOKEN: ${{ github.token }}
@@ -83,3 +83,13 @@ jobs:
         with:
           version: 1.30.0
           advanced-security: false
+
+  homebrew-template:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses] -- Verified by gh actions-lock; commit pinned in actions.lock.
+        with:
+          persist-credentials: false
+      - name: Check formula generation and Ruby syntax
+        run: python3 -m unittest discover -s presets/homebrew-cli/tests -v

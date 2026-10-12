@@ -1,0 +1,60 @@
+name: Prepare Homebrew formulas
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Existing release version (X.Y.Z, without v)'
+        required: true
+        type: string
+      cli-name:
+        description: 'Formula and cmd directory name (e.g. teiban-cli)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prepare-homebrew
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      CLI_NAME: ${{ inputs.cli-name }}
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_CLEANUP: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.14'
+      - name: Render formulas from a released source archive
+        run: |
+          python3 scripts/render_formula.py \
+            --repository "$GITHUB_REPOSITORY" \
+            --name "$CLI_NAME" \
+            --version "$RELEASE_VERSION" \
+            --output-dir generated/Formula
+      - name: Install and test stable and versioned formulas
+        run: |
+          brew tap-new --no-git teiban/release-check
+          cp generated/Formula/*.rb "$(brew --repository teiban/release-check)/Formula/"
+          brew install --build-from-source "teiban/release-check/$CLI_NAME"
+          brew test "teiban/release-check/$CLI_NAME"
+          brew install --build-from-source "teiban/release-check/$CLI_NAME@$RELEASE_VERSION"
+          brew test "teiban/release-check/$CLI_NAME@$RELEASE_VERSION"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: homebrew-formulas
+          path: generated/Formula/*.rb
+          if-no-files-found: error
+          retention-days: 7
