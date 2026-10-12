@@ -22,7 +22,7 @@ JavaScript / TypeScript、CSS、Go、lint・整形・テスト、GitHub Actions�
 1. [VoidZeroのツール群＋GoでWebアプリを作るときの定番](docs/web-voidzero-go.md)。
 2. [GitHub ActionsのCI、Actionのlock、更新・検証の定番](docs/github-actions.md)。
 3. [自作CLIをHomebrewで導入・更新・固定できるようにする定番](docs/homebrew-cli.md)。
-4. 小さなChrome拡張を作るときの開発・テスト・配布の定番。
+4. [小さなChrome拡張を作るときの開発・テスト・配布の定番](docs/chrome-extension.md)。
 
 ## 読み方・育て方
 
