@@ -93,7 +93,8 @@ Chrome Web Storeへ出す場合は、icons・掲載情報・必要なプライ�
 公開する更新ではmanifest versionを上げ、配布物の版と揃える。
 CIでのpackage生成とストアでの公開は、別の権限・操作として設計する。
 
-依存更新時はmanifestとlockfileを揃え、実Chromeのテストも実行する。
+依存更新時はpackage.jsonとlockfileを揃え、実Chromeのテストも実行する。
+Chromeのmanifest.jsonのversionは、拡張の新しい版を公開するときに別途更新する。
 サイト側のDOM変更は依存更新とは別に起こるため、対象判定が崩れた場合の挙動も残しておく。
 
 ## 導入するときの順序
