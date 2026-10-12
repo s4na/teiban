@@ -72,7 +72,8 @@ jobs:
       - name: Check workflow syntax and expressions
         run: |
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
-          actionlint .github/workflows/*.yml parts/github-actions/ci.yml
+          actionlint
+          actionlint parts/github-actions/ci.yml
       - name: Keep copyable workflow action refs in sync
         run: python3 scripts/check_action_versions.py .github/workflows/ci.yml parts/github-actions/ci.yml
       - name: Verify action dependencies
