@@ -33,6 +33,10 @@ CLIでlockfileを生成できることと、runnerがそのlockを適用する�
 Enterprise Cloudでも、採用するリポジトリ・runner・schema / CLIの対応を確認する。
 lockの利用と、管理ポリシーでlockを強制することは別の条件として確認する。
 未対応なら、`uses` を40桁commit SHAで固定し、コメントにリリース版を残す。
+このSHA固定はその参照を固定するもので、composite Action内部等の推移依存まで固定しない。
+内部のusesに可変タグが残ることがあるため、採用するActionの定義も確認する。
+必要なら内部参照を管理できるActionを選ぶ等、推移依存も制御する方法を決める。
+lockfileによる推移依存の固定と、同じ保証として扱わない。
 
 ```sh
 # 確認時点の導入例。採用するCLI版の互換性を確認してpinする
