@@ -62,6 +62,13 @@ Puppeteerがテスト用Chromeを取得するため、初回導入にはネッ�
 テストは別プロファイルのChromeを起動し、サイトの応答をfixtureへ差し替える。
 実サービスへのログインは不要。個人のChromeプロファイルは使用しない。
 
+Ubuntu 24.04のGitHub hosted runnerでは、AppArmorとChrome for Testingの組み合わせに
+対応するため、CI jobだけで `CHROME_NO_SANDBOX=1` を指定する。
+この指定は破棄されるrunnerで、すべてのページ応答を管理下のfixtureへ差し替えるテスト用。
+ローカル実行ではsandboxを有効にする。実サイトや信頼できないページを開くテストに
+変更するときは、この指定を外してsandboxの動く実行環境を用意する。
+背景は [PuppeteerのUbuntu AppArmorに関する説明](https://pptr.dev/troubleshooting#issues-with-apparmor-on-ubuntu) を参照。
+
 手動確認は `chrome://extensions/` でデベロッパーモードを有効にし、
 「パッケージ化されていない拡張機能を読み込む」で `extension/` を指定する。
 JS変更後は拡張と対象ページをreloadする。実サイトでの対象・対象外の操作も確認する。

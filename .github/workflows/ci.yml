@@ -99,6 +99,8 @@ jobs:
   chrome-extension:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      CHROME_NO_SANDBOX: '1'
     defaults:
       run:
         working-directory: presets/chrome-extension

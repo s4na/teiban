@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import process from 'node:process';
 import test from 'node:test';
 import puppeteer from 'puppeteer';
 
@@ -26,6 +27,9 @@ test('loaded Manifest V3 content script', async t => {
   const browser = await puppeteer.launch({
     headless: true,
     pipe: true,
+    dumpio: true,
+    // Opt in only on a disposable CI runner; every page response is a local fixture.
+    args: process.env.CHROME_NO_SANDBOX === '1' ? ['--no-sandbox'] : [],
     enableExtensions: [join(root, 'extension')]
   });
   t.after(() => browser.close());
