@@ -72,7 +72,9 @@ jobs:
       - name: Check workflow syntax and expressions
         run: |
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
-          actionlint .github/workflows/*.yml parts/github-actions/ci.yml presets/homebrew-cli/.github/workflows/*.yml presets/chrome-extension/.github/workflows/*.yml
+          actionlint
+          mapfile -t templates < <(git ls-files 'parts/github-actions/ci.yml' 'presets/*/.github/workflows/*.yml' 'presets/*/.github/workflows/*.yaml')
+          actionlint "${templates[@]}"
       - name: Keep copyable workflow action refs in sync
         run: python3 scripts/check_action_versions.py .github/workflows/ci.yml parts/github-actions/ci.yml presets/homebrew-cli/.github/workflows/prepare-homebrew.yml presets/chrome-extension/.github/workflows/ci.yml
       - name: Verify action dependencies
