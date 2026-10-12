@@ -19,7 +19,7 @@ JavaScript / TypeScript、CSS、Go、lint・整形・テスト、GitHub Actions�
 
 ## 最初にまとめるテーマ
 
-1. VoidZeroのツール群＋GoでWebアプリを作るときの定番。
+1. [VoidZeroのツール群＋GoでWebアプリを作るときの定番](docs/web-voidzero-go.md)。
 2. GitHub ActionsのCI、Actionのlock、更新・検証の定番。
 3. 自作CLIをHomebrewで導入・更新・固定できるようにする定番。
 4. 小さなChrome拡張を作るときの開発・テスト・配布の定番。
