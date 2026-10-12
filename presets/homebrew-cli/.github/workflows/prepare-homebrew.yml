@@ -43,7 +43,9 @@ jobs:
             --repository "$GITHUB_REPOSITORY" \
             --name "$CLI_NAME" \
             --version "$RELEASE_VERSION" \
-            --output-dir generated/Formula
+            --output-dir Formula
+          mkdir -p generated/Formula
+          cp "Formula/$CLI_NAME.rb" "Formula/$CLI_NAME@$RELEASE_VERSION.rb" generated/Formula/
       - name: Install and test stable and versioned formulas
         run: |
           brew tap-new --no-git teiban/release-check
