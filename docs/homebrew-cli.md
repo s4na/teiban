@@ -122,6 +122,11 @@ brew install --HEAD OWNER/REPO/my-cli
 # 固定版はkeg-onlyの配置から実行する例
 brew install OWNER/REPO/my-cli@0.1.0
 "$(brew --prefix OWNER/REPO/my-cli@0.1.0)/bin/my-cli" --help
+
+# 不要になった版を削除し、tapも使わなくなったら解除する例
+brew uninstall OWNER/REPO/my-cli
+brew uninstall OWNER/REPO/my-cli@0.1.0
+brew untap OWNER/REPO
 ```
 
 ## 参考資料
