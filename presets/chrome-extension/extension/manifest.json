@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Teiban Content Script Example",
+  "version": "0.1.0",
+  "description": "対象URLと要素を限定したcontent scriptの最小構成例。",
+  "content_scripts": [
+    {
+      "matches": ["https://example.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

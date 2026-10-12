@@ -1,0 +1,4 @@
+h2[data-teiban-target="notice"].teiban-example-highlight {
+  outline: 2px solid #15803d;
+  outline-offset: 4px;
+}

@@ -72,7 +72,7 @@ jobs:
       - name: Check workflow syntax and expressions
         run: |
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
-          actionlint .github/workflows/*.yml parts/github-actions/ci.yml presets/homebrew-cli/.github/workflows/*.yml
+          actionlint .github/workflows/*.yml parts/github-actions/ci.yml presets/homebrew-cli/.github/workflows/*.yml presets/chrome-extension/.github/workflows/*.yml
       - name: Keep copyable workflow action refs in sync
         run: python3 scripts/check_action_versions.py .github/workflows/ci.yml parts/github-actions/ci.yml
       - name: Verify action dependencies
@@ -95,3 +95,21 @@ jobs:
           persist-credentials: false
       - name: Check formula generation and Ruby syntax
         run: python3 -m unittest discover -s presets/homebrew-cli/tests -v
+
+  chrome-extension:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: presets/chrome-extension
+    steps:
+      - uses: actions/checkout@v7.0.1 # zizmor: ignore[unpinned-uses] -- Verified by gh actions-lock; commit pinned in actions.lock.
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0 # zizmor: ignore[unpinned-uses] -- Verified by gh actions-lock; commit pinned in actions.lock.
+        with:
+          node-version-file: presets/chrome-extension/.node-version
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run package
