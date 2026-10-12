@@ -19,7 +19,7 @@ Web＋Go構成のCIと、Action依存の固定・更新・検証を揃える部�
 | キャッシュ | 最初は使わない。時間が必要になったらlockfileに紐づけて導入 |
 | workflow検査 | actionlintで構文・式、zizmorで権限・注入等を確認 |
 | Action依存 | 対応環境では `actions.lock`、未対応環境では40桁SHA固定 |
-| 更新 | Dependabotの週次PR。設定とlockfileを同じ変更で揃える |
+| 更新 | Dependabotの週次PR＋公開から7日のcooldown。設定とlockfileを同じ変更で揃える |
 
 通常のPRコードの検査には `pull_request_target` を使わない。
 デプロイ時の資格情報は専用job・environmentへ分け、対応するサービスならOIDCを使う。
