@@ -74,7 +74,10 @@ lock未対応の環境へ持ち込む場合は、タグを40桁SHA＋版コメ�
 5. Dependabotに `github-actions` とnpm（pnpm）の対象ディレクトリを指定する。
 
 Dependabotは既にlockへ登録したActionの更新とlock再生成を扱う。
-新規workflowの登録は人が生成する。Vite+本体の更新はcoreとVitestのoverrideも合わせる。
+新規workflowの登録は人が生成する。
+Dependabotが走査するのはルートのworkflowで、コピー用の `parts/github-actions/ci.yml` は対象外。
+CIの `scripts/check_action_versions.py` が両者のAction参照の一致を確認するため、
+更新PRではコピー用の参照も同じ版へ更新する。Vite+本体の更新はcoreとVitestのoverrideも合わせる。
 ブランチ保護・environment・管理ポリシーの設定は利用先リポジトリで行う。
 
 チェーンPRは親をbaseにするため、マージは親から順に行う。
