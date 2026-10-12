@@ -21,6 +21,8 @@ def main():
     live, template = map(refs, sys.argv[1:])
     differences = [f'{action}: template={ref}, live={live.get(action, "missing")}'
                    for action, ref in template.items() if live.get(action) != ref]
+    differences.extend(f'{action}: missing from the copyable template'
+                       for action in live.keys() - template.keys())
     if not template:
         raise SystemExit('template has no action refs')
     if differences:
