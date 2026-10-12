@@ -37,6 +37,7 @@ Goの依存追加時は `go mod tidy` でgo.sumもコミットする（この例
    golangci-lintの導入例は `go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2`。
    `$(go env GOPATH)/bin` がPATHに必要。
 4. `make install`、`make check` を実行する。グローバルの `vp` は不要。
+   pnpmは `web/` 内で起動する。Corepack利用時も、そのpackage.jsonの版指定を選ばせる。
    Socket Firewallを使う環境では `make PNPM="sfw pnpm" install` のように実行する。
 
 ```sh
@@ -65,10 +66,10 @@ Viteの開発proxyはbuildには含まれない。デプロイ先、DB、認証�
 | 依存導入 | `make install` |
 | 全チェック | `make check` |
 | 整形 | `make fmt` |
-| JS/TS・CSS整形の確認、JS/TS lint・型検査 | `pnpm --dir web run check` |
-| CSS lint | `pnpm --dir web run lint:css` |
-| JSテスト | `pnpm --dir web test` |
-| production build | `pnpm --dir web run build` |
+| JS/TS・CSS整形の確認、JS/TS lint・型検査 | `cd web && pnpm run check` |
+| CSS lint | `cd web && pnpm run lint:css` |
+| JSテスト | `cd web && pnpm test` |
+| production build | `cd web && pnpm run build` |
 | Goのみ | `cd api` 後、`go vet ./...`、`golangci-lint run`、`go test -race ./...`、`go build ./...` |
 
 CIもこれらのコマンドを実行する。workflowの設定はGitHub Actionsの構成例で追加する。
