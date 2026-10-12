@@ -7,7 +7,12 @@ class TeibanCli < Formula
 
   depends_on "go" => :build
 
+  def fetch
+    system "go", "mod", "download"
+  end
+
   def install
+    ENV["GOPROXY"] = "off"
     system "go", "build", *std_go_args(output: bin/"@NAME@", ldflags: "-s -w"), "./cmd/@NAME@"
   end
 

@@ -36,6 +36,9 @@ scripts/render_formula.py               URL・checksum・通常版・固定版�
 これは利用先CLIへ組み込むテンプレート。teiban自身をbrew配布するものではない。
 実行できるCLIの `go.mod` と `cmd/<name>`、`--help` の仕様を利用先で用意する。
 そのうえでこのディレクトリのREADME以外を利用先のルートへコピーする。
+Formulaの `fetch` に対応するHomebrew 7以降を前提にする。
+Go modulesはネットワークを使える `fetch` で先に取得し、`install` では
+`GOPROXY=off` でbuildする。`go.mod`・`go.sum` と必要なGo版もソースへ含める。
 
 - `desc`、main以外のデフォルトブランチ、`install` と `test do` をCLIに合わせる。
 - Go以外ならGoのbuild依存を変える。Pythonならruntime依存とlibexecのlauncherを設計する。
@@ -56,7 +59,10 @@ generatorは既存の固定版と異なる内容で上書きしようとする�
 checksumは取得したarchiveと一致することを示す。リリース内容自体の信頼性はタグとソースのレビューで確認する。
 
 `prepare-homebrew.yml` はデフォルトブランチから手動実行し、公開済みversionとCLI名を入力する。
-Formulaを生成してbrewの実インストール・テストを行い、artifactへ保存する。
+checkoutした `Formula/` の既存固定版と照合しながら生成してから、対象の2ファイルを
+artifact用ディレクトリへコピーする。brewの実インストール・テストを行い、artifactへ保存する。
+公開済みFormulaはこのリポジトリのデフォルトブランチの `Formula/` に保持する。
+別tapで管理する場合はその公開済み固定版も取得し、生成先へ配置してから実行する。
 生成物を確認し、利用先のFormula更新PRへ含める。タグ作成・mainへのpush・Release公開は行わない。
 
 ## 利用者向けREADMEの定番
@@ -111,6 +117,8 @@ macOSの署名・notarizationやLinuxへの対応も、選んだ配布方式で�
 
 2026-10-12: generatorの入力検証、通常版・固定版の生成、再実行、固定版の変更拒否とRuby構文を確認。
 `python3 -m unittest discover -s tests -v` が成功（3テスト）。
+生成Formulaのfetch/installメソッドを一時的なGo CLIで実行し、空のmodule cacheから
+外部moduleを取得してGOPROXY=offでbuildできることも確認した（Homebrew sandbox外での確認）。
 workflowのactionlint・zizmorも成功。
 利用先CLIの公開タグ・brew実インストール・Release公開は未実施。workflowのbrew検証は利用先で行う。
 
