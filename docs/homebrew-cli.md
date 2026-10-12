@@ -60,10 +60,15 @@ Goなら `go mod download` と `GOPROXY=off` を組み合わせ、go.mod・go.su
 まずは明示したversionを対象に、成果物とFormulaを確認してから公開する運用にする。
 
 1. versionと、そのversionが指すソースcommitを確定する。
-2. 配布物を生成または取得し、checksumを計算する。
+2. FormulaのURLを取得可能にして、配布物のchecksumを計算する。
 3. 公開済みFormulaと照合し、通常版・固定版の更新候補を作る。
 4. brew install・brew testを実施する。
-5. Formula・タグ・Releaseを、決めた順序と権限で公開する。
+5. 検証済みのFormulaを公開し、必要なRelease情報・告知を整える。
+
+タグのarchiveを使うなら、brew installの前に対象commitのタグを公開する。
+Release assetを使うなら、そのassetを取得できるReleaseも先に公開する。
+配布物の公開とFormulaの公開を同じ段階にせず、Formulaの更新は検証成功後に行う。
+配布物を先に公開できない運用では、検証用URLやinstaller cacheを使う方式を別途設計する。
 
 既存固定版との照合は、空の生成ディレクトリだけではできない。
 同じリポジトリでも別tapでも、公開済みFormulaを取得してから比較する。
@@ -101,6 +106,9 @@ READMEには、tapの追加、通常版・固定版・HEADの導入、更新、�
 brew tap OWNER/REPO https://github.com/OWNER/REPO.git
 brew install OWNER/REPO/my-cli
 brew upgrade OWNER/REPO/my-cli
+
+# 開発branchのHEAD版を導入する例
+brew install --HEAD OWNER/REPO/my-cli
 
 # 固定版はkeg-onlyの配置から実行する例
 brew install OWNER/REPO/my-cli@0.1.0
