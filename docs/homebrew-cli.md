@@ -92,7 +92,9 @@ ipv4-runはmainへのマージごとにpatchを上げ、処理済みPRをstate�
 - state・タグ・Formula・Releaseのどこまで進んだかをどう保存・復旧するか。
 - GITHUB_TOKENで作ったイベントが後続workflowを起動しない場合をどう扱うか。
 
-`pull_request_target: closed` を使う場合も、write権限でPR headを実行せず、マージ後のdefault branchを扱う。
+`pull_request_target: closed` は未マージのcloseでも起動するため、マージ時だけの処理には
+`if: github.event.pull_request.merged == true` を条件にする。
+write権限でPR headを実行せず、マージ後のdefault branchを扱う。
 処理済みstateを残すだけでなく、タグや公開物との整合性も確認する。
 参照元の自動化をそのまま移す前に、自分のrelease方針に必要な部分を選ぶ。
 
