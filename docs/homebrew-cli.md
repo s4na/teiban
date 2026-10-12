@@ -24,6 +24,13 @@ CLI本体のリポジトリにFormulaを同居させる場合は、tapのURLを�
 GoReleaserを使う場合は、現在の推奨が `homebrew_casks` である点を確認する。
 古い `brews` の例をそのまま採用せず、配布するOS・CPUと方式に合う設定を選ぶ。
 
+長期的にchecksumを固定する配布物は、版付きの名前でRelease asset等へ公開し、
+公開後に同じassetを差し替えない方式を初期値にする。ソースbuildでも自分で作ったarchiveを配布できる。
+GitHubの自動生成タグarchiveは、同じcommitでも圧縮等の再生成によりbytesが変わる場合があり、
+抽出後の内容が同じこととSHA-256が同じことは別になる。
+参照元のタグarchive方式を採る場合も、この違いを理解し、固定版のURL・checksumを
+長期保持したいなら、自分で公開したarchiveへ寄せる。
+
 ## 通常版・固定版・HEADを分ける
 
 | 種類 | 管理の仕方 | 利用者に伝えること |
@@ -125,4 +132,5 @@ brew install OWNER/REPO/my-cli@0.1.0
 - [ipv4-runのrelease処理](https://github.com/s4na/ipv4-run/blob/fb41539767b9da8d30a884f6efde8a75646df4dd/scripts/release.py)
 - [Homebrew Formula Cookbook](https://docs.brew.sh/Formula-Cookbook)
 - [Homebrew taps](https://docs.brew.sh/Taps)
+- [GitHubソースarchiveの安定性](https://docs.github.com/en/repositories/working-with-files/using-files/downloading-source-code-archives#stability-of-source-code-archives)
 - [GoReleaserのHomebrew設定](https://goreleaser.com/customization/publish/homebrew_casks/)
