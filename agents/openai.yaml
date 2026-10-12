@@ -1,0 +1,4 @@
+interface:
+  display_name: "定番（teiban）"
+  short_description: "Web・CI・CLI配布・Chrome拡張の定番を用途に合わせて選ぶ"
+  default_prompt: "$teiban を使って、このリポジトリの用途と既存設定を確認し、初期構成・lint・CI・配布のうち必要な定番を提案してください。"
