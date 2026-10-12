@@ -89,9 +89,9 @@ APIが増えたらOpenAPI等による型生成を検討する。
 2. Vite+の公式手順でフロントを導入し、依存の重複・版の整合性を確認する。
 3. JS/TS・CSS・Goのcheckコマンドと、editorの設定を揃える。
 4. APIの境界と開発proxy、本番の配信方法を決める。
-5. ローカルのcheck・test・buildを通し、GitHub Actionsへ同じ確認を載せる。
+5. ローカルのcheck・test・buildを通し、[GitHub Actions](github-actions.md)へ同じ確認を載せる。
 
-CIの記事は後続で追加する。コマンド名は各プロジェクトのscriptsにまとめる。
+コマンド名は各プロジェクトのscriptsにまとめる。
 更新時はmanifestとlockfileを同時に更新し、Vite+の同梱版・overrides・pluginの互換性も確認する。
 GoやNodeの更新も、linter・CI runnerとの整合性を含めて扱う。
 
