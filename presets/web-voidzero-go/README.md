@@ -84,8 +84,9 @@ Node、Go、golangci-lintの版もCIとローカルを合わせる。
 ## 検証記録と参考資料
 
 2026-10-12: Node 24.16.0、Vite+ 1.0.0、Go 1.26.3、golangci-lint 2.13.2。
-JS/TSの整形・lint・型検査、CSS lint、Vitest、build、Goの整形・静的解析・raceテスト・buildを確認する。
-実APIと開発proxyの接続も確認対象。productionへのデプロイはこの例の対象外。
+JS/TSの整形・lint・型検査、CSS lint、Vitest、build、Goの整形・静的解析・raceテスト・buildが成功した。
+実APIと開発proxyの `/api/health` 接続、Viteによるフロントの配信も確認した。
+ブラウザでの画面操作とproductionへのデプロイは未検証。
 
 - [Vite+のローカルCLIと依存の揃え方](https://viteplus.dev/guide/local-cli)
 - [Vite+ check](https://viteplus.dev/guide/check)
