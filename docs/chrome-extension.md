@@ -30,6 +30,12 @@ matchesは必要なHTTPS originへ絞り、URLのpathやframeの範囲も確認�
 content scriptだけで足りる機能に、tabsや広いhost権限を一律に付けない。
 権限やmatchesを増やす更新は、対象外での動作と利用者への影響も確認する。
 
+matchesはdocumentへ注入する条件で、SPAの同一document内のpath変更を継続監視する条件ではない。
+pushState / replaceStateで対象外のpathへ移っても、注入済みのJS・CSSは残る。
+未注入のdocumentが対象pathへ移っても、その遷移だけでは新しく注入されない。
+SPAでpathを限定する機能は、注入範囲を決めた上でURL変更を検出し、
+現在のURLに応じた機能の有効化・装飾や操作の解除を設計する。
+
 content scriptのJS実行環境とページのJS実行環境を区別する。
 DOMを操作できることと、ページの変数・関数へ直接アクセスできることは同じではない。
 ページとのmessage通信が必要なら、入力の検証と受け付ける範囲を決める。
@@ -70,7 +76,8 @@ Puppeteerでは対応するChromeへunpacked extensionをloadし、拡張とし�
 | 対象条件に一致するDOM | 必要な機能が実行される |
 | 似ているが条件外のDOM | 誤操作しない |
 | SPAによる追加・更新 | 初回load以外にも対応できる |
-| matches外のURL | JS・CSSが適用されない |
+| matches外のURLへの新しいdocumentのload | JS・CSSが注入されない |
+| SPAの同一document内で対象pathを出入り | 現在のURLに合わせて有効化・解除される |
 | class・属性の書き換え | 状態を復元でき、変更ループしない |
 | 非表示・自動クリックの失敗 | 表示や操作状態を復旧できる |
 
