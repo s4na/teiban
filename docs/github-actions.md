@@ -27,8 +27,10 @@ job名はbranch protection等から参照されるため、変更時はそちら
 Actionの参照を解決し、`.github/workflows/actions.lock` にcommitとidentityを記録する。
 対応環境では、workflowの読みやすい参照と、実際に実行するcommitを分けて管理できる。
 
-2026-10-12時点ではプレビューで、GHESは対象外。
-採用するリポジトリ・runner・schema / CLIの対応を確認する。
+2026-10-12時点の公式資料ではGitHub Enterprise Cloud向けのプレビューで、GHESは対象外。
+Free・Pro・Teamではlockfileによる実行固定を前提にせず、40桁commit SHAで固定する。
+CLIでlockfileを生成できることと、runnerがそのlockを適用することを区別する。
+Enterprise Cloudでも、採用するリポジトリ・runner・schema / CLIの対応を確認する。
 lockの利用と、管理ポリシーでlockを強制することは別の条件として確認する。
 未対応なら、`uses` を40桁commit SHAで固定し、コメントにリリース版を残す。
 
@@ -44,8 +46,12 @@ gh actions-lock --verify
 ```
 
 通常の生成と、更新のための `--relock` は目的が異なる。
-`--verify-local` はofflineでのcoverage確認で、上流の正当性を検査する代わりにはならない。
+offlineでのcoverage確認を読み取りだけで行う場合は、例のv0.1.6では
+`gh actions-lock --verify-local --no-fix` を使う。
+この版の `--verify-local` 単独はローカルAction参照を移行する場合がある。
+offline確認は、上流の正当性を検査する代わりにはならない。
 Actionやworkflowの追加・削除もlockの更新対象にする。lockfileは生成ツールで更新する。
+生成時にはworkflowのuses等も変更されるため、lock以外の差分も確認する。
 
 移動・改名等で検証が失敗した場合は、変更理由を確認する。
 `--accept-moved` の自動実行で検証を通す運用にしない。
@@ -101,6 +107,7 @@ lockfile・OS・toolchain等をキーへ含め、依存更新時に古い結果�
 
 - [gh-actions-lock](https://github.com/github/gh-actions-lock)
 - [GitHubのworkflow dependency lockfiles](https://docs.github.com/en/enterprise-cloud%40latest/actions/concepts/security/workflow-dependency-lockfiles)
+- [公式の導入手順と対象プラン](https://docs.github.com/en/enterprise-cloud%40latest/actions/how-tos/secure-your-work/lock-workflow-dependencies)
 - [lockの強制とDependabot更新](https://docs.github.com/en/actions/how-tos/administer/enforce-workflow-lockfiles)
 - [Dependabotの設定項目](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference)
 - [actionlint](https://github.com/rhysd/actionlint)
