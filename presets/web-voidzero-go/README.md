@@ -77,7 +77,7 @@ Goのrace検査はCGOと対応プラットフォームが必要。通常のmacOS
 
 ## 更新
 
-`pnpm outdated` で候補を確認し、package.jsonとpnpm-lock.yamlを同時に更新する。
+`cd web && pnpm outdated` で候補を確認し、package.jsonとpnpm-lock.yamlを同時に更新する。
 Vite+を更新したら `pnpm exec vp toolchain`（`web/` 内）で同梱版を確認し、
 `pnpm-workspace.yaml` のVite / Vitest overrides も揃えてから `make check` を実行する。
 Node、Go、golangci-lintの版もCIとローカルを合わせる。
