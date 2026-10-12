@@ -1,17 +1,25 @@
 """Fail if the copyable CI template drifts from the live workflow's action refs."""
-import re
+import json
+import subprocess
 import sys
-from pathlib import Path
-
-PATTERN = re.compile(r'^\s*-\s+uses:\s+([\w.-]+/[\w./-]+)@([^\s#]+)', re.MULTILINE)
 
 
 def refs(path):
+    # Read YAML structurally so quoting, anchors and reusable workflows work too.
+    workflow = json.loads(subprocess.check_output([
+        'ruby', '-ryaml', '-rjson', '-e',
+        'puts JSON.generate(YAML.safe_load(File.read(ARGV.fetch(0)), aliases: true))',
+        str(path)], text=True))
     result = {}
-    for action, ref in PATTERN.findall(Path(path).read_text()):
-        if action in result and result[action] != ref:
-            raise ValueError(f'{path}: {action} has multiple refs')
-        result[action] = ref
+    for job in workflow.get('jobs', {}).values():
+        for entry in [job, *job.get('steps', [])]:
+            use = entry.get('uses', '')
+            if use.startswith(('./', 'docker://')) or '@' not in use:
+                continue
+            action, ref = use.rsplit('@', 1)
+            if action in result and result[action] != ref:
+                raise ValueError(f'{path}: {action} has multiple refs')
+            result[action] = ref
     return result
 
 
