@@ -48,7 +48,8 @@ gh actions-lock --verify
 通常の生成と、更新のための `--relock` は目的が異なる。
 offlineでのcoverage確認を読み取りだけで行う場合は、例のv0.1.6では
 `gh actions-lock --verify-local --no-fix` を使う。
-この版の `--verify-local` 単独はローカルAction参照を移行する場合がある。
+この版の `--verify-local` 単独はローカルAction参照を移行する場合がある
+（[v0.1.6の実装](https://github.com/github/gh-actions-lock/blob/047fddf38163b304f1e6ef5649f5ac1646edc6a3/cmd/gh-actions-lock/verify.go#L35-L42)）。
 offline確認は、上流の正当性を検査する代わりにはならない。
 Actionやworkflowの追加・削除もlockの更新対象にする。lockfileは生成ツールで更新する。
 生成時にはworkflowのuses等も変更されるため、lock以外の差分も確認する。
@@ -65,7 +66,8 @@ actionlintは構文・式等、zizmorは権限・未固定参照・入力の扱�
 reusable workflowも依存として扱い、stepのusesだけを確認して終わらない。
 
 lockとlintの対応範囲は、採用する版で確認する。
-例えば確認時点のzizmor 1.30.0はnative lockを認識せず、タグ参照を未固定と判定する。
+例えば確認した [zizmor 1.30.0](https://github.com/zizmorcore/zizmor/tree/fb814d6687450fc8e0b0fba8d958b1ac40c0647f) は
+native lockを認識せず、タグ参照を未固定と判定する。
 この場合はSHA固定を使うか、lock検証を必須にした上で該当行だけに理由付きの除外を置く。
 監査全体を無効にしない。lock未対応環境へ移すときは除外も見直す。
 
@@ -106,6 +108,7 @@ lockfile・OS・toolchain等をキーへ含め、依存更新時に古い結果�
 確認日: 2026-10-12。プレビューの利用条件とツールの対応は導入時に再確認する。
 
 - [gh-actions-lock](https://github.com/github/gh-actions-lock)
+- [確認したgh-actions-lock v0.1.6のREADME](https://github.com/github/gh-actions-lock/blob/047fddf38163b304f1e6ef5649f5ac1646edc6a3/README.md)
 - [GitHubのworkflow dependency lockfiles](https://docs.github.com/en/enterprise-cloud%40latest/actions/concepts/security/workflow-dependency-lockfiles)
 - [公式の導入手順と対象プラン](https://docs.github.com/en/enterprise-cloud%40latest/actions/how-tos/secure-your-work/lock-workflow-dependencies)
 - [lockの強制とDependabot更新](https://docs.github.com/en/actions/how-tos/administer/enforce-workflow-lockfiles)
