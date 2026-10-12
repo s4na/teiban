@@ -82,4 +82,24 @@ test('loaded Manifest V3 content script', async t => {
       await page.close();
     }
   });
+
+  await t.test('restores its marker after a SPA class rewrite without a mutation loop', async () => {
+    const page = await openFixture(browser);
+    try {
+      await page.waitForSelector('#target.teiban-example-highlight');
+      await page.evaluate(() => {
+        globalThis.classMutations = 0;
+        const target = document.querySelector('#target');
+        new MutationObserver(records => { globalThis.classMutations += records.length; })
+          .observe(target, { attributes: true, attributeFilter: ['class'] });
+        target.className = 'site-heading';
+      });
+      await page.waitForSelector('#target.site-heading.teiban-example-highlight');
+      await page.waitForNetworkIdle();
+      assert.equal(await page.evaluate(() => globalThis.classMutations), 2);
+      assert.equal(await page.$eval('#target', el => getComputedStyle(el).outlineStyle), 'solid');
+    } finally {
+      await page.close();
+    }
+  });
 });

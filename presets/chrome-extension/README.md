@@ -81,6 +81,7 @@ CIのAction依存は [GHA部品](../../parts/github-actions/README.md) に従い
 - 条件が一致した要素だけに適用される。
 - 見出し・要素の種類などが異なる対象へ作用しない。
 - 後から追加されたSPAの要素にも適用される。
+- SPAがclassを書き換えても自分の装飾を復元し、不要な変更ループを起こさない。
 - 条件が変わったときに自分の装飾を外せる。
 - matches外のoriginではJSもCSSも適用されない。
 
@@ -101,7 +102,7 @@ Chromeの実テストも実行する。manifestのmatches・権限を増やし�
 ## 検証記録と参考資料
 
 2026-10-12: Node 24.16.0、ESLint 10.8.1、Puppeteer 25.6.0。
-lint、Manifest V3拡張をloadしたChromeテスト（5件）が成功。
+lint、Manifest V3拡張をloadしたChromeテスト（6件）が成功。
 ZIPはmanifest.json・content.js・content.cssのみで、manifestがルートにあることを確認した。
 利用先の実サイトでの手動確認とChrome Web Storeへの公開は未実施。
 

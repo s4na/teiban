@@ -5,7 +5,9 @@
       const matches = element.tagName === 'H2' &&
         element.getAttribute('data-teiban-target') === 'notice' &&
         element.textContent.trim() === '定番サンプル';
-      element.classList.toggle(className, matches);
+      if (element.classList.contains(className) !== matches) {
+        element.classList.toggle(className, matches);
+      }
     }
   }
   update();
@@ -14,6 +16,6 @@
     subtree: true,
     characterData: true,
     attributes: true,
-    attributeFilter: ['data-teiban-target']
+    attributeFilter: ['data-teiban-target', 'class']
   });
 })();

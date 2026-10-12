@@ -16,6 +16,6 @@ export default defineConfig([
   },
   {
     files: ['test/**/*.js'],
-    languageOptions: { globals: { document: 'readonly', getComputedStyle: 'readonly' } }
+    languageOptions: { globals: { document: 'readonly', getComputedStyle: 'readonly', MutationObserver: 'readonly' } }
   }
 ]);
