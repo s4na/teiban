@@ -19,7 +19,7 @@ JavaScript / TypeScript、CSS、Goの開発環境から、lint・整形・テス
 ## 追加していく構成
 
 1. [VoidZeroのツール群＋Goで作るWebアプリ](presets/web-voidzero-go/README.md)。
-2. GitHub ActionsのCI、依存Actionのlock、更新と検証。
+2. [GitHub ActionsのCI、依存Actionのlock、更新と検証](parts/github-actions/README.md)。
 3. `brew install` で導入できるCLIの配布。
 4. 小さなChrome拡張の開発・テスト・配布。
 
