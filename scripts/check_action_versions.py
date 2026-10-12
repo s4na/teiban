@@ -34,6 +34,9 @@ def main():
         if pin:
             allowed[action].add(pin['commit'].removeprefix('sha1-'))
     differences = []
+    primary = refs(sys.argv[2])
+    differences.extend(f'{sys.argv[2]}: {action}: missing from the copyable template'
+                       for action in live.keys() - primary.keys())
     for template_path in sys.argv[2:]:
         template = refs(template_path)
         if not template:
