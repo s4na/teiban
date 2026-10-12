@@ -1,0 +1,7 @@
+overrides:
+  vite@*: npm:@voidzero-dev/vite-plus-core@1.0.0
+  vitest@*: 5.0.1
+# Vite+ core uses the toolchain's version number while providing Vite 8 APIs.
+peerDependencyRules:
+  allowedVersions:
+    vite: 1.0.0
