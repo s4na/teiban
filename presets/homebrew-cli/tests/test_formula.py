@@ -20,6 +20,8 @@ class FormulaTest(unittest.TestCase):
         self.assertIn('class MyCliAT010 < Formula', pinned)
         self.assertIn('keg_only :versioned_formula', pinned)
         self.assertNotIn('  head ', pinned)
+        self.assertIn('output: bin/"my-cli"', stable)
+        self.assertIn('output: bin/"my-cli"', pinned)
         with tempfile.TemporaryDirectory() as directory:
             for name, source in [('my-cli.rb', stable), ('my-cli@0.1.0.rb', pinned)]:
                 path = Path(directory) / name
