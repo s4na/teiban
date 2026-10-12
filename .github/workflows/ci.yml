@@ -74,7 +74,7 @@ jobs:
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           actionlint .github/workflows/*.yml parts/github-actions/ci.yml presets/homebrew-cli/.github/workflows/*.yml presets/chrome-extension/.github/workflows/*.yml
       - name: Keep copyable workflow action refs in sync
-        run: python3 scripts/check_action_versions.py .github/workflows/ci.yml parts/github-actions/ci.yml
+        run: python3 scripts/check_action_versions.py .github/workflows/ci.yml parts/github-actions/ci.yml presets/homebrew-cli/.github/workflows/prepare-homebrew.yml presets/chrome-extension/.github/workflows/ci.yml
       - name: Verify action dependencies
         env:
           GH_TOKEN: ${{ github.token }}

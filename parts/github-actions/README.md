@@ -77,7 +77,10 @@ Dependabotは既にlockへ登録したActionの更新とlock再生成を扱う�
 新規workflowの登録は人が生成する。
 Dependabotが走査するのはルートのworkflowで、コピー用の `parts/github-actions/ci.yml` は対象外。
 CIの `scripts/check_action_versions.py` が両者のAction参照の一致を確認するため、
-更新PRではコピー用の参照も同じ版へ更新する。Vite+本体の更新はcoreとVitestのoverrideも合わせる。
+更新PRではコピー用の参照も同じ版へ更新する。
+Chrome拡張・Homebrewのコピー用workflowも、実行用CIと共通するActionはlockのSHAと比較する。
+その構成だけで使うActionはSHA固定し、利用先の用途に応じて更新する。
+比較scriptはRuby標準のYAML parserを使うため、実行にはPython 3.9以上とRubyが必要。Vite+本体の更新はcoreとVitestのoverrideも合わせる。
 ブランチ保護・environment・管理ポリシーの設定は利用先リポジトリで行う。
 
 チェーンPRは親をbaseにするため、マージは親から順に行う。
