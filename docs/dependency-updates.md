@@ -1,29 +1,21 @@
-# パッケージ管理・依存更新の定番
+# 依存管理ポリシーのMarkdownテンプレート
 
-## まず採用する方針
+対象プロジェクトの文書へ転記して使う。設定例は実際の構成に合わせ、GitHub Actionsを使わない場合はその節を省く。
 
-パッケージ管理をするプロジェクトではDependabotを設定する。
-新規追加・更新とも、取り込むパッケージのバージョンは公開から7日以上経過したものを選ぶ。
-公開直後の不具合や不正な更新に気づくための待機期間であり、安全性の確認やテストの代わりにはしない。
+## 共通方針
 
-Webアプリ、CLI、Chrome拡張などで共通の方針とする。
-GitHub Actionsの外部依存にも適用し、固定方法は[GitHub Actionsの定番](github-actions.md)を参照する。
+- パッケージ管理にはDependabotを設定する。実際のecosystem・manifestの場所を登録し、未対応の依存は手動で同じ方針を確認する。
+- 新規追加・更新は公開から7日以上経過した版に限る。手動更新、security update、lockfile再解決で変わる推移依存も対象とする。
+- major更新は他と分け、関連依存のgroup化は互換性とレビューのしやすさに合わせて選ぶ。
+- 各 `updates` に `cooldown.default-days: 7` を指定する。SemVer別の日数を省略するか7日以上にし、`include`・`exclude` で待機対象を狭めない。
+- 取り込み前に公開日時・変更履歴・manifestとlockfileの差分を確認し、check・test・buildを通す。PR作成日やcommit日時を公開日時の代用にせず、7日未満または公開日時が不明の版は取り込まない。
 
-## Dependabotで設定すること
+cooldownは通常のversion updateの候補・PR作成に適用され、security updateやマージ時の検査には適用されない。
+設定だけで全更新の7日待機を保証せず、対象バージョンの公開日時を別途確認する。7日待機自体も安全性の保証にはしない。
 
-対象プロジェクトの `.github/dependabot.yml` に、実際に使うecosystemとmanifestの場所を登録する。
-npm・pnpm・Yarnは `npm`、Go modulesは `gomod`、GitHub Actionsは `github-actions` など、
-採用したpackage manager・版・lockfile形式への対応を公式資料で確認して選ぶ。
-Dependabot未対応の依存は対象外であることを明示し、手動更新でも7日の待機方針を守る。
+## Dependabotの設定例
 
-各 `updates` エントリーに `cooldown.default-days: 7` を明示する。
-SemVer別の日数を省略すれば `default-days` が使われる。
-`semver-major-days`・`semver-minor-days`・`semver-patch-days` を追加する場合も7日未満にせず、
-`include` で対象を狭めたり `exclude` で待機を外したりしない。
-GitHub Actionsは `default-days` に対応するが、SemVer別の日数設定には対応しない。
-
-次は `web/` にJSのmanifestがあるプロジェクトの説明用の例。
-Goなどを併用する場合は、そのecosystem・ディレクトリのエントリーにも同じcooldownを設定する。
+対象の `.github/dependabot.yml` 用。`web/` にnpm系のmanifestがある場合の例で、各ecosystem・ディレクトリに同じcooldownを設定する。
 
 ```yaml
 version: 2
@@ -36,28 +28,18 @@ updates:
       default-days: 7
 ```
 
-`schedule.interval` は更新を調べる頻度、`cooldown` は公開後の待機期間を決める。
-週次の調査だけでは、調査直前に公開された版を候補にできるため、7日の待機を保証できない。
-`github-actions` の `directory` は `/` を指定し、ルートのworkflow等を対象にする。
-major更新を他と分け、関連依存のgroup化は互換性とレビューのしやすさに合わせて選ぶ。
+`weekly` は調査頻度であり、7日待機の代わりにはならない。
+GitHub Actionsは `package-ecosystem: "github-actions"`・`directory: "/"` とし、SemVer別ではなく `default-days` を使う。
 
-## 取り込み前に確認すること
+## GitHub Actionsを使う場合
 
-cooldownが制御するのは通常のversion updateの候補選定・PR作成であり、マージ時の検査ではない。
-security updateには適用されないため、Dependabotの設定だけで全更新の7日待機を保証したと扱わない。
-security updateのPRでも、取り込み前に対象バージョンの公開から7日経過したことを別途確認する。
-
-手動更新、新規追加、lockfileの再解決で変わる推移依存にも同じ方針を適用する。
-PRの作成日やcommitの日付ではなく、registry等で対象バージョンの公開日時を確認する。
-7日未満、または公開日時を確認できない版は取り込まない。
-
-manifestとlockfileの差分、変更履歴、互換性を確認し、対象のcheck・test・buildを通して取り込む。
-本文の設定例は方針を説明するものであり、利用先での設定・検証は別途行う。
+- SHA固定を採る場合は、公開後7日以上の具体的なリリース版を選び、`pinact run` で外部Actionと再利用workflowを40桁commit SHAへ固定する。版コメントも残す。
+- `pinact run --check` でファイルを変更せず固定漏れを検査し、CIにも組み込む。この確認だけで公開後7日の待機や安全性を検証できたと扱わない。
+- `actions.lock` がrunnerで適用される環境では、[GitHub Actionsの定番](https://github.com/s4na/teiban/blob/main/docs/github-actions.md)に従って `gh actions-lock` で生成・検証する。その参照にpinactのSHA固定を一律に重ねず、pinactをlockの生成・検証に使わない。
 
 ## 参考資料
 
-確認日: 2026-10-13。対応ecosystemとcooldownの範囲は導入時に再確認する。
+確認日: 2026-10-13。利用先での設定・実稼働の検証は別途行う。
 
-- [Dependabotの設定項目・cooldown](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#cooldown)
-- [Dependabotの対象ディレクトリ](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#directories-or-directory)
-- [Dependabotが対応するecosystem](https://docs.github.com/en/code-security/reference/supply-chain-security/supported-ecosystems-and-repositories)
+- [Dependabotの設定・cooldown](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#cooldown)、[対応ecosystem](https://docs.github.com/en/code-security/reference/supply-chain-security/supported-ecosystems-and-repositories)
+- [pinactの使い方](https://github.com/suzuki-shunsuke/pinact/blob/33cd8b1b95fa2268b348d55145690a050d120012/README.md)、[固定の検査](https://github.com/suzuki-shunsuke/pinact/blob/33cd8b1b95fa2268b348d55145690a050d120012/docs/check.md)

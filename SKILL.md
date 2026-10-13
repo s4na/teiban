@@ -27,13 +27,14 @@ symlinkから使う場合も、リンク先のスキル一式を参照する。�
 | 依頼の用途 | 読む記事 | ここで決めること |
 | --- | --- | --- |
 | VoidZero＋GoのWebアプリ、JS/TS・CSS・Goのlint | [Webの定番](docs/web-voidzero-go.md) | ツールの役割、依存の境界、ローカルの検査、API接続 |
-| パッケージ管理・依存更新 | [依存更新の定番](docs/dependency-updates.md) | Dependabotの対象、公開後7日の待機、取り込み前の確認 |
+| パッケージ管理・依存更新 | [依存管理テンプレート](docs/dependency-updates.md) | Dependabot、7日待機、pinactの共通方針 |
 | GitHub Actionsの導入・見直し、Actionの固定 | [GHAの定番](docs/github-actions.md) | 検査の再現、権限、lockの利用条件、pinact、更新 |
 | 自作CLIをbrewで配布 | [Homebrewの定番](docs/homebrew-cli.md) | tap、配布方式、通常版・固定版・HEAD、releaseの順序 |
 | 小さなChrome拡張 | [Chrome拡張の定番](docs/chrome-extension.md) | 権限、DOM・SPA、テスト、配布 |
 
 複数の用途が依頼に含まれる場合は記事を組み合わせる。
-パッケージ管理を扱うときは、用途にかかわらず依存更新の記事も読み、Dependabotと公開後7日の待機方針を適用する。
+パッケージ管理を扱うときは、依存管理テンプレートを読み、対象に合う節を適用する。
+文書へ転記する場合は設定例のecosystem・ディレクトリを合わせ、不要な節を省く。
 WebやChrome拡張の相談だけでCIまで追加しない。CIを扱うときにGHAの記事を読む。
 Homebrewのrelease workflowを扱うときはGHAの記事も読む。
 文書を作成・更新するときは[記事の書き方](docs/writing-notes.md)を読む。
@@ -53,7 +54,9 @@ Homebrewのrelease workflowを扱うときはGHAの記事も読む。
 
 ## 成果物を作り、確認する
 
-相談・文書化では、定番の結論を先に示し、理由と変更条件を続ける。
+相談・文書化では、定番の結論を先に示す。文章より明確になる箇所は、短いコード・設定例・確認コマンドで示す。
+例には対象ファイル、前提となる版・環境、置き換える値を添える。理由・変更条件・落とし穴は短く残す。
+共通例は一か所にまとめて参照し、同じ設定を記事ごとに複製しない。
 記事へのリンクと該当節を添え、提案と実際に確認できた事実を分ける。
 対象プロジェクトへ残す文書では、利用者が辿れるURL等を使い、手元のスキルへの相対パスを埋め込まない。
 
