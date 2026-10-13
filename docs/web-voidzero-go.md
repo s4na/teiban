@@ -2,12 +2,14 @@
 
 ## 用途とまず採用する構成
 
-ブラウザ側をTypeScript、APIをGoで作るWebアプリを想定する。
+ブラウザ側をTypeScript＋Preact、APIをGoで作るWebアプリを想定する。
+外部データはValibotで検証し、スキーマからTypeScriptの型を導く。
 フロントの開発・整形・lint・テストはVite+にまとめ、Goは独立して検査する。
 
 | 領域 | まず採用するもの | 判断の目安 |
 | --- | --- | --- |
-| UI | TypeScript＋Reactなど | UIの要件に合わせてVue等も選ぶ |
+| UI | TypeScript＋Preact | React向けライブラリを使う場合はcompatでの対応を確認する |
+| 外部データの検証 | Valibot | 実行時のスキーマとTypeScriptの型を一か所で定義する |
 | 開発・build | Vite+ | 同梱Vite / Rolldownとpluginの互換性を確認する |
 | JS/TS整形・lint | Oxfmt＋Oxlint | 型を使うlintと型エラーの検査を有効にする |
 | JSテスト | Vite+に含まれるVitest | DOMが必要なテストだけ実行環境を変える |
@@ -54,17 +56,39 @@ scripts内の`vp`はプロジェクトの実行ファイルを使うため、glo
 }
 ```
 
+### PreactとTypeScript
+
+実行時依存に `preact`・`valibot`、開発依存に `@preact/preset-vite`・`typescript`・`vite-plus` を用意する。
+採用版は[依存管理ポリシー](dependency-updates.md)に従い、Vite+同梱Viteとpresetの互換性、`@babel/core` 等のpeer dependencyを確認する。
+Preactは型定義を同梱するため、新規構成に `@types/react` は追加しない。
+
+`web/tsconfig.json` の `compilerOptions` へ統合する断片。既存のmodule・target等の設定は残す。
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}
+```
+
+`react-jsx` はTypeScriptの変換方式名で、JSXの参照先は `preact`。
+[PreactのTypeScript設定](https://preactjs.com/guide/v11/typescript/)と
+[Valibotの要件](https://valibot.dev/guides/installation/)に合わせる。
+
 ### 型検査・テスト・開発proxy
 
-React、対応する`@vitejs/plugin-react`、TypeScript設定を用意済みの場合の`web/vite.config.ts`。
-別のUIではpluginを替え、既存プロジェクトでは必要な設定を残して統合する。
+`web/vite.config.ts`。React用pluginをPreactのpresetへ置き換え、両方を登録しない。
+既存プロジェクトでは必要な設定を残して統合する。
 
 ```ts
-import react from "@vitejs/plugin-react";
+import preact from "@preact/preset-vite";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [preact()],
   fmt: {
     ignorePatterns: ["dist/**", "coverage/**"],
   },
@@ -86,6 +110,11 @@ export default defineConfig({
   },
 });
 ```
+
+presetは既定で `react`・`react-dom` を `preact/compat` へaliasする。
+新しいコードは `preact`・`preact/hooks` を使う。React向けライブラリは、対応API・peer dependency・型を個別に確認する。
+TypeScript側のaliasが必要なら[compatの型設定](https://preactjs.com/guide/v11/typescript/#typescript-preactcompat-configuration)も合わせる。
+移行時は画面・イベント・テストを確認してから不要なReact依存を外す。
 
 `vp check`で整形・lint・型検査を行う。buildの成功だけで型検査を済ませない。
 設定名は[Vite+ check](https://viteplus.dev/guide/check)、
@@ -159,12 +188,51 @@ go build ./...
 
 - 開発proxyはproduction buildに含まれない。本番の同一origin配信・転送、または別originのCORS・認証は別途設計する。
 - 開発の都合でCORSを広く許可し、その設定を本番へ持ち込まない。
-- request・response・エラー形式を決める。外部JSONはTSの型だけで信用せず、必要な境界で実行時検証する。
+- request・response・エラー形式を決める。外部JSONは次のValibotスキーマで検証してからUIへ渡す。
 - APIが増えたらOpenAPI等の型生成を検討する。ブラウザへ渡す値とGo側だけのsecretを分ける。
 - HTTP serverのtimeout、起動・終了処理、ログを決める。プロセスの応答確認と、DB等を含むreadinessを分ける。
 
 重要な画面操作とAPI接続は単体テストとは別に確認する。
 serverの設定は[Go net/http](https://pkg.go.dev/net/http)を参照。
+
+### Valibotで応答を検証し、型を導く
+
+`web/src/api/task.ts`。URLとスキーマを実際のAPI契約へ合わせる。
+`response.json()` の結果は `unknown` として受け、型アサーションで検証を省かない。
+
+```ts
+import * as v from "valibot";
+
+export const TaskSchema = v.object({
+  id: v.pipe(v.string(), v.nonEmpty()),
+  title: v.pipe(v.string(), v.nonEmpty()),
+  done: v.boolean(),
+});
+
+export type Task = v.InferOutput<typeof TaskSchema>;
+
+export async function fetchCurrentTask(): Promise<Task> {
+  const response = await fetch("/api/tasks/current");
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const input: unknown = await response.json();
+  const result = v.safeParse(TaskSchema, input);
+  if (!result.success) {
+    throw new Error("Invalid task response");
+  }
+  return result.output;
+}
+```
+
+- `safeParse` の成功時だけ `output` を使う。型は `InferOutput` から導き、同じ形の `interface` を別に書かない。
+- `v.object` は未知の項目を出力から除く。未知の項目も拒否する契約なら `v.strictObject` を選ぶ。
+- 通信・JSON構文・HTTP・スキーマの失敗は呼び出し元で扱い、未検証のデータを表示しない。検証エラーへ生の応答を含めない。
+- テストでは正常な応答、必須項目の欠落、空のid・title、`done: "false"` の拒否を確認する。クライアントの検証でGo側の入力検証・認可を省略しない。
+
+[型推論](https://valibot.dev/guides/infer-types/)・[safeParse](https://valibot.dev/api/safeParse/)・
+[objectの仕様](https://valibot.dev/api/object/)を参照。フォームや保存済みJSONも、必要な境界で同じ方針を使う。
 
 ## 導入・更新時の確認
 
@@ -176,4 +244,4 @@ overridesが必要な場合は、[Vite+の公式導入手順](https://viteplus.d
 同梱Vitestの版は`web/`で`pnpm exec vp toolchain vitest`を実行して確認する。
 
 確認日: 2026-10-13。設定・コマンドは公式資料に照合したが、例のbuild・testは未実行。
-採用する版・UI・実行環境で確認する。React pluginは[公式README](https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react)を参照。
+採用する版・UI・実行環境で確認する。Preact presetは[公式README](https://github.com/preactjs/preset-vite)を参照。

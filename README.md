@@ -15,7 +15,7 @@ Markdown内のコード・設定例を起点に、選ぶ理由と適用条件を
 
 | テーマ | 記事内の例 |
 | --- | --- |
-| [VoidZero＋GoのWebアプリ](docs/web-voidzero-go.md) | ディレクトリ、scripts、Vite+設定、Goの検査 |
+| [VoidZero＋GoのWebアプリ](docs/web-voidzero-go.md) | Preact、Valibot、Vite+設定、Goの検査 |
 | [GitHub Actions](docs/github-actions.md) | 最小CI、SHA固定・lock、lint、入力の扱い |
 | [HomebrewでCLIを配布](docs/homebrew-cli.md) | Formula、導入・固定・更新、配布前の検証 |
 | [Chrome拡張](docs/chrome-extension.md) | manifest、lint、実Chromeのテスト、配布物 |

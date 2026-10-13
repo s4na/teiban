@@ -26,7 +26,7 @@ symlinkから使う場合も、リンク先のスキル一式を参照する。�
 
 | 依頼の用途 | 読む記事 | ここで決めること |
 | --- | --- | --- |
-| VoidZero＋GoのWebアプリ、JS/TS・CSS・Goのlint | [Webの定番](docs/web-voidzero-go.md) | ツールの役割、依存の境界、ローカルの検査、API接続 |
+| VoidZero＋GoのWebアプリ、Preact、Valibot、JS/TS・CSS・Goのlint | [Webの定番](docs/web-voidzero-go.md) | Preactの設定、Valibotのスキーマと型推論、API境界、検査 |
 | パッケージ管理・依存更新 | [依存管理テンプレート](docs/dependency-updates.md) | Dependabot、7日待機、pinactの共通方針 |
 | GitHub Actionsの導入・見直し、Actionの固定 | [GHAの定番](docs/github-actions.md) | 検査の再現、権限、lockの利用条件、pinact、更新 |
 | 自作CLIをbrewで配布 | [Homebrewの定番](docs/homebrew-cli.md) | tap、配布方式、通常版・固定版・HEAD、releaseの順序 |
