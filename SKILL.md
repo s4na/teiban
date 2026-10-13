@@ -1,6 +1,6 @@
 ---
 name: teiban
-description: 新規・既存リポジトリの初期構成、lint、CI、配布を個人の定番に沿って選定・設定する。VoidZero＋GoのWebアプリ、GitHub Actions、Homebrewで配るCLI、小さなChrome拡張の構成相談・設定・ノウハウ文書化の依頼で使う。
+description: 新規・既存リポジトリの初期構成、パッケージ管理・依存更新、lint、CI、配布を個人の定番に沿って選定・設定する。VoidZero＋GoのWebアプリ、GitHub Actions、Homebrewで配るCLI、小さなChrome拡張の構成相談・設定・ノウハウ文書化の依頼で使う。
 ---
 
 # 定番をプロジェクトに適用する
@@ -27,11 +27,13 @@ symlinkから使う場合も、リンク先のスキル一式を参照する。�
 | 依頼の用途 | 読む記事 | ここで決めること |
 | --- | --- | --- |
 | VoidZero＋GoのWebアプリ、JS/TS・CSS・Goのlint | [Webの定番](docs/web-voidzero-go.md) | ツールの役割、依存の境界、ローカルの検査、API接続 |
-| GitHub Actionsの導入・見直し、Actionの固定 | [GHAの定番](docs/github-actions.md) | 検査の再現、権限、lockの利用条件、更新 |
+| パッケージ管理・依存更新 | [依存更新の定番](docs/dependency-updates.md) | Dependabotの対象、公開後7日の待機、取り込み前の確認 |
+| GitHub Actionsの導入・見直し、Actionの固定 | [GHAの定番](docs/github-actions.md) | 検査の再現、権限、lockの利用条件、pinact、更新 |
 | 自作CLIをbrewで配布 | [Homebrewの定番](docs/homebrew-cli.md) | tap、配布方式、通常版・固定版・HEAD、releaseの順序 |
 | 小さなChrome拡張 | [Chrome拡張の定番](docs/chrome-extension.md) | 権限、DOM・SPA、テスト、配布 |
 
 複数の用途が依頼に含まれる場合は記事を組み合わせる。
+パッケージ管理を扱うときは、用途にかかわらず依存更新の記事も読み、Dependabotと公開後7日の待機方針を適用する。
 WebやChrome拡張の相談だけでCIまで追加しない。CIを扱うときにGHAの記事を読む。
 Homebrewのrelease workflowを扱うときはGHAの記事も読む。
 文書を作成・更新するときは[記事の書き方](docs/writing-notes.md)を読む。

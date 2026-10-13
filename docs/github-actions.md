@@ -15,7 +15,7 @@ workflow固有の複雑な処理を増やす前に、プロジェクト側のコ
 | 再現性 | lockfileを変更しない依存導入。Actionの依存も固定 |
 | 待ち時間 | jobのtimeoutと、同じPRの古い検証をキャンセルするconcurrency |
 | 検査 | 整形・lint・型検査・test・build。workflowにはactionlintとzizmor |
-| 更新 | Dependabot等で更新PRを作り、設定とlockの差分を一緒にレビュー |
+| 更新 | Dependabotで公開後7日以上の版を候補にし、取り込み条件と設定・lockの差分をレビュー |
 
 必須チェックをpath filterで起動しなくすると、マージに必要な結果が返らない場合がある。
 monorepoでは、変更のない領域も含めて最終結果を返す方法を設計してから絞り込む。
@@ -63,6 +63,28 @@ Actionやworkflowの追加・削除もlockの更新対象にする。lockfileは
 再利用workflowの内部は定義元のlockで管理する。
 Actionが実行時に取得する任意のパッケージまで、このlockが固定するわけではない。
 
+## SHA固定はpinactで管理する
+
+SHA固定を採る場合は[pinact](https://github.com/suzuki-shunsuke/pinact)を使う。
+外部Actionと再利用workflowの `uses` を40桁の完全長commit SHAに固定し、対応するリリース版をコメントに残す。
+まず[依存更新の方針](dependency-updates.md)に沿って公開から7日以上経過した具体的な版を選び、そのタグを固定する。
+
+```sh
+# 採用するpinactの版を揃え、対象リポジトリでSHAへ固定する
+pinact run
+
+# ファイルを変更せず、固定漏れを検査する
+pinact run --check
+```
+
+固定後はSHA・版コメント・変更差分を確認する。
+`pinact run --check` はCIにも組み込み、Actionや再利用workflowを追加したときの固定漏れを検出する。
+この固定確認だけで、公開後7日の待機やActionの安全性まで確認できたと扱わない。
+
+`actions.lock` を採用しrunnerで適用できる環境では、前節の `gh actions-lock` による生成・検証を使う。
+lockで管理する参照にpinactのSHA固定を一律に重ねず、採用した固定方式に合わせて検査を選ぶ。
+pinactを `actions.lock` の生成・検証ツールとして扱わない。
+
 ## workflow自体のlint
 
 actionlintは構文・式等、zizmorは権限・未固定参照・入力の扱い等を検査する。
@@ -87,10 +109,10 @@ forkのPRにsecretが渡らない前提で、検査と公開の入口を決め�
 
 ## 更新とキャッシュ
 
-Dependabot等にActionと言語の依存を登録し、major更新を他と分けて確認する。
-週次更新、関連依存のgroup化、version updateのcooldownは運用に合わせて選ぶ。
-例えば公開から7日待つ方針にしても、security updateまで同じ待機条件にしない。
-各ecosystem・lock形式への対応と、更新対象のディレクトリを確認する。
+DependabotにActionと言語の依存を登録し、[依存更新の定番](dependency-updates.md)に従って公開後7日以上の版を取り込む。
+各ecosystemの設定に `cooldown.default-days: 7` を指定し、major更新を他と分けて確認する。
+security updateはcooldownの対象外なので、取り込み前の7日経過確認を別途行う。
+対応ecosystem・lock形式・更新対象ディレクトリも確認する。
 
 Dependabotのgithub-actionsの対象はルートのworkflow等で、別ディレクトリの説明用ファイルが
 自動更新されるとは限らない。記事や別管理の設定にも同じActionを記載した場合は追随を確認する。
@@ -103,13 +125,13 @@ lockfile・OS・toolchain等をキーへ含め、依存更新時に古い結果�
 
 1. ローカルの確認コマンドと、CIの実行ディレクトリを揃える。
 2. PR・default branch・公開イベントの起動条件と権限を分ける。
-3. 対応環境ならlockを生成し、それ以外はSHA固定にする。
-4. workflowのlint・lock検証を含め、実際にGitHub上で結果を確認する。
+3. 対応環境ならlockを生成し、それ以外はpinactでSHA固定にする。
+4. workflowのlintと、採用した方式のlock検証またはpinactのcheckを含め、実際にGitHub上で結果を確認する。
 5. 必須チェック、依存更新、キャッシュ、デプロイ条件を設定する。
 
 ## 参考資料
 
-確認日: 2026-10-12。プレビューの利用条件とツールの対応は導入時に再確認する。
+確認日: lock関連は2026-10-12、Dependabot・pinactは2026-10-13。プレビューの利用条件とツールの対応は導入時に再確認する。
 
 - [gh-actions-lock](https://github.com/github/gh-actions-lock)
 - [確認したgh-actions-lock v0.1.6のREADME](https://github.com/github/gh-actions-lock/blob/047fddf38163b304f1e6ef5649f5ac1646edc6a3/README.md)
@@ -117,5 +139,7 @@ lockfile・OS・toolchain等をキーへ含め、依存更新時に古い結果�
 - [公式の導入手順と対象プラン](https://docs.github.com/en/enterprise-cloud%40latest/actions/how-tos/secure-your-work/lock-workflow-dependencies)
 - [lockの強制とDependabot更新](https://docs.github.com/en/actions/how-tos/administer/enforce-workflow-lockfiles)
 - [Dependabotの設定項目](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference)
+- [確認したpinactのREADME](https://github.com/suzuki-shunsuke/pinact/blob/33cd8b1b95fa2268b348d55145690a050d120012/README.md)
+- [pinactの固定確認](https://github.com/suzuki-shunsuke/pinact/blob/33cd8b1b95fa2268b348d55145690a050d120012/docs/check.md)
 - [actionlint](https://github.com/rhysd/actionlint)
 - [zizmor](https://docs.zizmor.sh/)
