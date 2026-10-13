@@ -65,25 +65,9 @@ Actionが実行時に取得する任意のパッケージまで、このlockが�
 
 ## SHA固定はpinactで管理する
 
-SHA固定を採る場合は[pinact](https://github.com/suzuki-shunsuke/pinact)を使う。
-外部Actionと再利用workflowの `uses` を40桁の完全長commit SHAに固定し、対応するリリース版をコメントに残す。
-まず[依存更新の方針](dependency-updates.md)に沿って公開から7日以上経過した具体的な版を選び、そのタグを固定する。
-
-```sh
-# 採用するpinactの版を揃え、対象リポジトリでSHAへ固定する
-pinact run
-
-# ファイルを変更せず、固定漏れを検査する
-pinact run --check
-```
-
-固定後はSHA・版コメント・変更差分を確認する。
-`pinact run --check` はCIにも組み込み、Actionや再利用workflowを追加したときの固定漏れを検出する。
-この固定確認だけで、公開後7日の待機やActionの安全性まで確認できたと扱わない。
-
-`actions.lock` を採用しrunnerで適用できる環境では、前節の `gh actions-lock` による生成・検証を使う。
-lockで管理する参照にpinactのSHA固定を一律に重ねず、採用した固定方式に合わせて検査を選ぶ。
-pinactを `actions.lock` の生成・検証ツールとして扱わない。
+SHA固定には[依存管理テンプレート](dependency-updates.md)のpinact手順を使う。
+公開後7日以上の版を選び、外部Action・再利用workflowの固定とCIでのcheckを行う。
+`actions.lock` を適用する環境では、前節の生成・検証手順を使う。
 
 ## workflow自体のlint
 
@@ -109,10 +93,7 @@ forkのPRにsecretが渡らない前提で、検査と公開の入口を決め�
 
 ## 更新とキャッシュ
 
-DependabotにActionと言語の依存を登録し、[依存更新の定番](dependency-updates.md)に従って公開後7日以上の版を取り込む。
-各ecosystemの設定に `cooldown.default-days: 7` を指定し、major更新を他と分けて確認する。
-security updateはcooldownの対象外なので、取り込み前の7日経過確認を別途行う。
-対応ecosystem・lock形式・更新対象ディレクトリも確認する。
+Actionと言語の依存更新は[依存管理テンプレート](dependency-updates.md)に従う。
 
 Dependabotのgithub-actionsの対象はルートのworkflow等で、別ディレクトリの説明用ファイルが
 自動更新されるとは限らない。記事や別管理の設定にも同じActionを記載した場合は追随を確認する。
@@ -139,7 +120,5 @@ lockfile・OS・toolchain等をキーへ含め、依存更新時に古い結果�
 - [公式の導入手順と対象プラン](https://docs.github.com/en/enterprise-cloud%40latest/actions/how-tos/secure-your-work/lock-workflow-dependencies)
 - [lockの強制とDependabot更新](https://docs.github.com/en/actions/how-tos/administer/enforce-workflow-lockfiles)
 - [Dependabotの設定項目](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference)
-- [確認したpinactのREADME](https://github.com/suzuki-shunsuke/pinact/blob/33cd8b1b95fa2268b348d55145690a050d120012/README.md)
-- [pinactの固定確認](https://github.com/suzuki-shunsuke/pinact/blob/33cd8b1b95fa2268b348d55145690a050d120012/docs/check.md)
 - [actionlint](https://github.com/rhysd/actionlint)
 - [zizmor](https://docs.zizmor.sh/)
