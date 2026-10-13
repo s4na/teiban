@@ -10,6 +10,7 @@
 | --- | --- | --- |
 | UI | TypeScript＋Preact | React向けライブラリを使う場合はcompatでの対応を確認する |
 | 外部データの検証 | Valibot | 実行時のスキーマとTypeScriptの型を一か所で定義する |
+| 状態管理 | 必要に応じてPreact Signals | コンポーネント間の共有状態・派生値が増えたら採用する |
 | 開発・build | Vite+ | 同梱Vite / Rolldownとpluginの互換性を確認する |
 | JS/TS整形・lint | Oxfmt＋Oxlint | 型を使うlintと型エラーの検査を有効にする |
 | JSテスト | Vite+に含まれるVitest | DOMが必要なテストだけ実行環境を変える |
@@ -128,6 +129,46 @@ TypeScript側のaliasが必要なら[compatの型設定](https://preactjs.com/gu
 整形はeditorとCIで同じ設定を使い、依存・生成物を対象から外す。
 CSSのルール検査が必要なら[Stylelint](https://stylelint.io/user-guide/get-started/)を追加する。
 標準CSSは`stylelint-config-standard`を起点にし、Sass・Tailwind・CSS-in-JSでは対応設定を選ぶ。
+
+### 共有状態・派生値が増えたらSignals
+
+局所的な開閉状態などは `useState` で始める。状態の共有や派生値の管理が複雑になったら、
+実行時依存へ `@preact/signals` を追加する。必須依存にはせず、採用版は[7日待機の方針](dependency-updates.md)に従う。
+
+`web/src/state/tasks.ts`。後述のValibotから導く `Task` 型を使い、一覧と未完了件数をまとめる。
+
+```ts
+import { computed, signal } from "@preact/signals";
+import type { Task } from "../api/task";
+
+export function createTaskState() {
+  const tasks = signal<Task[]>([]);
+  const remaining = computed(() =>
+    tasks.value.filter((task) => !task.done).length
+  );
+  return { tasks, remaining };
+}
+```
+
+`web/src/TaskPage.tsx`。共通の親で状態を一度作り、共有する子には同じ `state` をpropsやContextで渡す。
+
+```tsx
+import { useState } from "preact/hooks";
+import { createTaskState } from "./state/tasks";
+
+export function TaskPage() {
+  const [state] = useState(createTaskState);
+  return <p>未完了: {state.remaining}</p>;
+}
+```
+
+- 更新は `state.tasks.value = nextTasks` のように新しい配列を代入する。配列・項目の直接変更だけでは通知されない。
+- 派生値は `computed` で求め、件数を別のsignalへ保存したり、同期のために `effect` を増やしたりしない。
+- APIからの値はValibotで検証してから代入する。Signalsは実行時の入力検証を代わりに行わない。
+- モジュール直下に利用者の状態を一つだけ置かない。特にSSRではリクエストごとに作り、利用者間で共有しない。
+
+一覧を差し替えたときの件数と、二つの `createTaskState()` 間で状態が独立することを確認する。
+[Signalsの公式ガイド](https://preactjs.com/guide/v11/signals/)を参照。
 
 ### ローカルとCIの共通手順
 
