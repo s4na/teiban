@@ -1,124 +1,125 @@
 # GitHub Actionsの定番
 
-## まず決める方針
+CIはローカルのcheck・test・buildを再現する。言語ごとのjobとworkflow自体の検査を分け、
+共通の依存更新ルールは[依存管理テンプレート](dependency-updates.md)を使う。
 
-CIは、ローカルで行うcheck・test・buildを再現する場所にする。
-workflow固有の複雑な処理を増やす前に、プロジェクト側のコマンドを揃える。
-[VoidZero＋Go](web-voidzero-go.md)なら、フロント・Go・workflow自体の検査を分けると見通しがよい。
+## 最初のworkflow
 
-| 項目 | 初期値・考え方 |
-| --- | --- |
-| 起動 | 通常の検証はpull_requestとdefault branchへのpush |
-| 権限 | contents: readを基本にし、writeは必要なjobだけへ渡す |
-| checkout | 通常の検査はPRのmerge結果。persist-credentials: falseを採用 |
-| 環境 | runnerのOS系統、言語・package manager・検査ツールの版を明示 |
-| 再現性 | lockfileを変更しない依存導入。Actionの依存も固定 |
-| 待ち時間 | jobのtimeoutと、同じPRの古い検証をキャンセルするconcurrency |
-| 検査 | 整形・lint・型検査・test・build。workflowにはactionlintとzizmor |
-| 更新 | Dependabotで公開後7日以上の版を候補にし、取り込み条件と設定・lockの差分をレビュー |
+`api/` にGo moduleがある場合の `.github/workflows/ci.yml` の例。
+Go版はコミット済みの `api/go.mod` の `go` / `toolchain` とローカルで揃える。
+JSやgolangci-lint等の検査は、対象のツールを準備したjobで[Webの定番](web-voidzero-go.md)と同じコマンドを実行する。
 
-必須チェックをpath filterで起動しなくすると、マージに必要な結果が返らない場合がある。
-monorepoでは、変更のない領域も含めて最終結果を返す方法を設計してから絞り込む。
-job名はbranch protection等から参照されるため、変更時はそちらも確認する。
-
-## Actionの固定: actions.lockを使えるか確認する
-
-`gh actions-lock` はGitHub公式のCLI拡張。
-Actionの参照を解決し、`.github/workflows/actions.lock` にcommitとidentityを記録する。
-対応環境では、workflowの読みやすい参照と、実際に実行するcommitを分けて管理できる。
-
-2026-10-12時点の公式資料ではGitHub Enterprise Cloud向けのプレビューで、GHESは対象外。
-Free・Pro・Teamではlockfileによる実行固定を前提にせず、40桁commit SHAで固定する。
-CLIでlockfileを生成できることと、runnerがそのlockを適用することを区別する。
-Enterprise Cloudでも、採用するリポジトリ・runner・schema / CLIの対応を確認する。
-lockの利用と、管理ポリシーでlockを強制することは別の条件として確認する。
-未対応なら、`uses` を40桁commit SHAで固定し、コメントにリリース版を残す。
-このSHA固定はその参照を固定するもので、composite Action内部等の推移依存まで固定しない。
-内部のusesに可変タグが残ることがあるため、採用するActionの定義も確認する。
-必要なら内部参照を管理できるActionを選ぶ等、推移依存も制御する方法を決める。
-lockfileによる推移依存の固定と、同じ保証として扱わない。
-
-```sh
-# 確認時点の導入例。採用するCLI版の互換性を確認してpinする
-gh extension install github/gh-actions-lock --pin v0.1.6
-
-# リポジトリのルートで生成し、workflowと一緒にコミットする
-gh actions-lock
-
-# GitHub上の参照・identityを含めて検証する
-gh actions-lock --verify
+```yaml
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  go:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: api
+    env:
+      GOFLAGS: -mod=readonly
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: api/go.mod
+          cache: false
+      - name: Check, test, build
+        run: |
+          unformatted="$(gofmt -l .)"
+          test -z "$unformatted"
+          go vet ./...
+          go test ./...
+          go build ./...
+          dependency_changes="$(git status --porcelain -- go.mod go.sum)"
+          test -z "$dependency_changes"
 ```
 
-通常の生成と、更新のための `--relock` は目的が異なる。
-offlineでのcoverage確認を読み取りだけで行う場合は、例のv0.1.6では
-`gh actions-lock --verify-local --no-fix` を使う。
-この版の `--verify-local` 単独はローカルAction参照を移行する場合がある
-（[v0.1.6の実装](https://github.com/github/gh-actions-lock/blob/047fddf38163b304f1e6ef5649f5ac1646edc6a3/cmd/gh-actions-lock/verify.go#L35-L42)）。
-offline確認は、上流の正当性を検査する代わりにはならない。
-Actionやworkflowの追加・削除もlockの更新対象にする。lockfileは生成ツールで更新する。
-生成時にはworkflowのuses等も変更されるため、lock以外の差分も確認する。
+例のActionは2026-10-13時点で公開後7日以上経過した版のSHAを確認済み。転記時にも版とrunner互換性を確認する。
+通常のPRはcheckout既定のmerge結果を検査し、公開jobへ流用しない。
+並行処理を使うGoでは、対応OS・CPU・CGOを確認して `go test -race ./...` も加える。
 
-移動・改名等で検証が失敗した場合は、変更理由を確認する。
-`--accept-moved` の自動実行で検証を通す運用にしない。
-再利用workflowの内部は定義元のlockで管理する。
-Actionが実行時に取得する任意のパッケージまで、このlockが固定するわけではない。
+- 必須jobをpath filterだけで省略すると結果待ちが残る。monorepoは変更なしでも最終結果を返す構成にする。
+- job名を変えるときはbranch protection等の必須チェック名も更新する。
+- JSの依存導入は採用したpackage managerのfrozen-lockfile相当を使う。
 
-## SHA固定はpinactで管理する
+## Actionの固定方式を選ぶ
 
-SHA固定には[依存管理テンプレート](dependency-updates.md)のpinact手順を使う。
-公開後7日以上の版を選び、外部Action・再利用workflowの固定とCIでのcheckを行う。
-`actions.lock` を適用する環境では、前節の生成・検証手順を使う。
+| 条件 | 採用する方式 | 注意点 |
+| --- | --- | --- |
+| runnerがnative lockを適用する環境 | `gh actions-lock` | 対応repo・runner・schema / CLI、lockを強制するポリシーを別々に確認 |
+| それ以外 | pinactで40桁SHA固定＋版コメント | 外部Actionと再利用workflowが対象。推移依存まで固定する保証はない |
 
-## workflow自体のlint
+2026-10-13時点でnative lockはEnterprise Cloud向けプレビュー、GHESは対象外。
+Free・Pro・TeamではSHA固定を使う。CLIでlockを生成できることと、runnerで適用されることを混同しない。
+SHA固定ではcomposite Action内部の可変参照も確認し、必要なら内部参照を管理できるActionを選ぶ。
+pinactの固定・checkは[共通テンプレート](dependency-updates.md)を参照する。
 
-actionlintは構文・式等、zizmorは権限・未固定参照・入力の扱い等を検査する。
-`.yml` と `.yaml` の両方を対象にする。actionlintは引数なしでリポジトリ内のworkflowを発見できる。
-reusable workflowも依存として扱い、stepのusesだけを確認して終わらない。
+### native lockを採用する場合
 
-lockとlintの対応範囲は、採用する版で確認する。
-例えば確認した [zizmor 1.30.0](https://github.com/zizmorcore/zizmor/tree/fb814d6687450fc8e0b0fba8d958b1ac40c0647f) は
-native lockを認識せず、タグ参照を未固定と判定する。
-この場合はSHA固定を使うか、lock検証を必須にした上で該当行だけに理由付きの除外を置く。
-監査全体を無効にしない。lock未対応環境へ移すときは除外も見直す。
+互換性を確認したCLIを使う。以下はv0.1.6の例。
 
-## PRコード・secret・デプロイの扱い
+```sh
+gh extension install github/gh-actions-lock --pin v0.1.6
+gh actions-lock                         # 生成。workflowと一緒にコミット
+gh actions-lock --verify                # 上流の参照・identityを検証
+gh actions-lock --verify-local --no-fix  # offlineで読み取りのみ
+```
 
-通常のPRの検査には `pull_request_target` を使わない。
-管理用イベントでwrite権限を使う場合は、PR headのコードを実行しない設計を確認する。
-PRタイトル等の入力をshellへ直接埋め込まず、env経由で渡して引用する。
+- `--relock` は依存を更新するときに使う。追加・削除時もlockを再生成し、workflowの変更を含む差分を確認する。
+- v0.1.6の `--verify-local` 単独はローカル参照を移行し得る。offline検査は上流検証の代わりにならない。
+- 移動・改名で失敗したら理由を調べ、`--accept-moved` で自動承認しない。
+- 再利用workflowの内部は定義元のlockで管理する。実行時に取得する任意のpackageまでは固定されない。
 
-デプロイは検査jobと権限を分け、environmentや保護条件を設ける。
-対応サービスならOIDCで短期間の資格情報を使う。
-forkのPRにsecretが渡らない前提で、検査と公開の入口を決める。
+## workflowを検査する
 
-## 更新とキャッシュ
+版を揃えたツールを導入し、リポジトリのルートで実行する。
 
-Actionと言語の依存更新は[依存管理テンプレート](dependency-updates.md)に従う。
+```sh
+actionlint
+zizmor --strict-collection .
+```
 
-Dependabotのgithub-actionsの対象はルートのworkflow等で、別ディレクトリの説明用ファイルが
-自動更新されるとは限らない。記事や別管理の設定にも同じActionを記載した場合は追随を確認する。
+`.yml` / `.yaml` と再利用workflowも対象にする。actionlintは構文・式、zizmorは権限・入力・未固定参照等を検査する。
+native lockへの対応はツールの採用版で確認する。確認済みのzizmor 1.30.0はlockを認識しないため、
+SHA固定にするか、lock検証を必須にして該当行だけに理由付き除外を置く。監査全体は無効にしない。
 
-キャッシュは、CIが動いてから遅い部分へ導入する。
-lockfile・OS・toolchain等をキーへ含め、依存更新時に古い結果を使わないようにする。
-キャッシュを使わない実行でも成功することを確認し、キャッシュへsecretを入れない。
+## 入力・公開・キャッシュ
 
-## 導入時に確認すること
+PRタイトル等をshellへ直接埋め込まず、env経由で引用する。既存jobへ加えるstepの例:
 
-1. ローカルの確認コマンドと、CIの実行ディレクトリを揃える。
-2. PR・default branch・公開イベントの起動条件と権限を分ける。
-3. 対応環境ならlockを生成し、それ以外はpinactでSHA固定にする。
-4. workflowのlintと、採用した方式のlock検証またはpinactのcheckを含め、実際にGitHub上で結果を確認する。
-5. 必須チェック、依存更新、キャッシュ、デプロイ条件を設定する。
+```yaml
+- name: Show PR title
+  if: github.event_name == 'pull_request'
+  env:
+    PR_TITLE: ${{ github.event.pull_request.title }}
+  run: printf '%s\n' "$PR_TITLE"
+```
+
+- 通常のPR検査に `pull_request_target` を使わない。管理イベントでwrite権限を使うときはPR headを実行しない。
+- デプロイは検査とjob・権限を分け、environmentの保護条件と、対応先ではOIDCを使う。fork PRへsecretが渡らない前提にする。
+- キャッシュはCIが通ってから導入する。lockfile・OS・toolchainをキーに含め、キャッシュなしでも検証し、secretを入れない。
+- Dependabotが記事内のAction例まで更新するとは限らない。設定と記事の版も追随させる。
 
 ## 参考資料
 
-確認日: lock関連は2026-10-12、Dependabot・pinactは2026-10-13。プレビューの利用条件とツールの対応は導入時に再確認する。
+確認日: 2026-10-13。例のGitHub上での実行・lintは未実施。導入先で検証する。
 
-- [gh-actions-lock](https://github.com/github/gh-actions-lock)
-- [確認したgh-actions-lock v0.1.6のREADME](https://github.com/github/gh-actions-lock/blob/047fddf38163b304f1e6ef5649f5ac1646edc6a3/README.md)
-- [GitHubのworkflow dependency lockfiles](https://docs.github.com/en/enterprise-cloud%40latest/actions/concepts/security/workflow-dependency-lockfiles)
-- [公式の導入手順と対象プラン](https://docs.github.com/en/enterprise-cloud%40latest/actions/how-tos/secure-your-work/lock-workflow-dependencies)
-- [lockの強制とDependabot更新](https://docs.github.com/en/actions/how-tos/administer/enforce-workflow-lockfiles)
-- [Dependabotの設定項目](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference)
-- [actionlint](https://github.com/rhysd/actionlint)
-- [zizmor](https://docs.zizmor.sh/)
+- [workflow構文](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)、[concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
+- [checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1)、[setup-go v7.0.0](https://github.com/actions/setup-go/releases/tag/v7.0.0)
+- [native lockの利用条件](https://docs.github.com/en/enterprise-cloud%40latest/actions/how-tos/secure-your-work/lock-workflow-dependencies)、[lockの強制とDependabot](https://docs.github.com/en/actions/how-tos/administer/enforce-workflow-lockfiles)
+- [gh-actions-lock v0.1.6](https://github.com/github/gh-actions-lock/blob/047fddf38163b304f1e6ef5649f5ac1646edc6a3/README.md)、[verify-localの実装](https://github.com/github/gh-actions-lock/blob/047fddf38163b304f1e6ef5649f5ac1646edc6a3/cmd/gh-actions-lock/verify.go#L35-L42)
+- [actionlint](https://github.com/rhysd/actionlint)、[zizmor](https://docs.zizmor.sh/)、[確認済みzizmor 1.30.0](https://github.com/zizmorcore/zizmor/tree/fb814d6687450fc8e0b0fba8d958b1ac40c0647f)
